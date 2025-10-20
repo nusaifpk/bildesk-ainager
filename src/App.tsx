@@ -295,7 +295,7 @@ function App() {
 
   return (
     <div className="h-screen bg-background-light font-display flex flex-col">
-      <header className="bg-white shadow-sm p-4 px-20 py-4 flex items-center justify-between fixed top-0 left-0 right-0 z-10">
+      <header className="bg-white shadow-sm p-4 md:px-20 flex items-center justify-between fixed top-0 left-0 right-0 z-10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center">
             <img src={logo} alt="logo"/>
