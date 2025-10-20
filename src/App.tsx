@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Phone, Paperclip, Mic, Send, ChevronRight, Building2, Compass, MonitorPlay, DoorOpen, FileText, MicOff } from 'lucide-react';
 import logo from './assets/ainagerlogo.png';
 import aiProfile from './assets/aiProfile.png';
+import userprofile from './assets/userprofile.jpg';
 
 // TypeScript declarations for Web Speech API
 interface SpeechRecognitionEvent extends Event {
@@ -60,6 +61,12 @@ function App() {
       content: '👋 Hello! Welcome to Bildesk. How can I assist you today?',
       timestamp: new Date(),
     },
+    {
+      id: '2',
+      type: 'user',
+      content: 'I would like to know more about what Bildesk is providing.',
+      timestamp: new Date(),
+    },
   ]);
 
   const [inputValue, setInputValue] = useState('');
@@ -110,11 +117,7 @@ function App() {
 
   const startListening = useCallback(() => {
     try {
-      console.log('Starting speech recognition...');
-      
-      // Check if Speech Recognition is supported
       if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        console.error('Speech recognition not supported');
         setIsMicAvailable(false);
         setInputValue('Speech recognition not supported in this browser. Please use Chrome or Edge.');
         return;
@@ -128,10 +131,8 @@ function App() {
       recognition.lang = 'en-US';
 
       recognition.onstart = () => {
-        console.log('Speech recognition started');
         setIsListening(true);
         setIsRecording(true);
-        // Store the current input value as base text
         baseTextRef.current = inputValue;
       };
 
@@ -148,52 +149,25 @@ function App() {
           }
         }
 
-        // Update input field with the recognized text
         if (finalTranscript) {
-          // Add final transcript to base text and update the base
           baseTextRef.current = baseTextRef.current + finalTranscript;
           setInputValue(baseTextRef.current);
-          // Auto-resize after updating text
           setTimeout(autoResize, 0);
-          console.log('Final transcript:', finalTranscript);
         } else if (interimTranscript) {
-          // Show interim results without brackets - just append to base text
           setInputValue(baseTextRef.current + interimTranscript);
-          // Auto-resize after updating text
           setTimeout(autoResize, 0);
-          console.log('Interim transcript:', interimTranscript);
         }
       };
 
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error('Speech recognition error:', event.error);
+      recognition.onerror = () => {
         setIsListening(false);
         setIsRecording(false);
-        
-        switch (event.error) {
-          case 'no-speech':
-            setInputValue('No speech detected. Please try again.');
-            break;
-          case 'audio-capture':
-            setInputValue('Microphone not found. Please check your microphone.');
-            setIsMicAvailable(false);
-            break;
-          case 'not-allowed':
-            setInputValue('Microphone access denied. Please allow microphone access.');
-            setIsMicAvailable(false);
-            break;
-          default:
-            setInputValue('Speech recognition error. Please try again.');
-        }
       };
 
       recognition.onend = () => {
-        console.log('Speech recognition ended');
         setIsListening(false);
         setIsRecording(false);
-        // Ensure the input value matches the base text (remove any interim results)
         setInputValue(baseTextRef.current);
-        // Auto-resize after updating text
         setTimeout(autoResize, 0);
       };
 
@@ -201,24 +175,20 @@ function App() {
       recognition.start();
       
     } catch (error) {
-      console.error('Error starting speech recognition:', error);
       setIsMicAvailable(false);
       setInputValue('Error starting speech recognition. Please try again.');
     }
   }, []);
 
   const stopListening = useCallback(() => {
-    console.log('Stopping speech recognition...');
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
       setIsRecording(false);
-      console.log('Speech recognition stopped');
     }
   }, [isListening]);
 
   const handleMicClick = useCallback(() => {
-    console.log('Mic button clicked, isRecording:', isRecording);
     if (isRecording) {
       stopListening();
     } else {
@@ -228,68 +198,48 @@ function App() {
 
   const handleSendClick = useCallback(() => {
     if (inputValue.trim()) {
-      // Handle sending text message
-      console.log('Sending message:', inputValue);
-      setInputValue(''); // Clear input after sending
-      baseTextRef.current = ''; // Reset base text
+      setInputValue('');
+      baseTextRef.current = '';
     }
   }, [inputValue]);
 
-  // Auto-resize textarea function
   const autoResize = useCallback(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      // Reset height to auto to get the correct scrollHeight
       textarea.style.height = 'auto';
-      // Set height to scrollHeight, but limit to max 6 lines (approximately 144px)
-      const maxHeight = 144; // 6 lines * 24px line height
+      const maxHeight = 144;
       const newHeight = Math.min(textarea.scrollHeight, maxHeight);
       textarea.style.height = `${newHeight}px`;
     }
   }, []);
 
-  // Handle textarea input changes
   const handleTextareaChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
-    // Auto-resize after state update
     setTimeout(autoResize, 0);
   }, [autoResize]);
 
-  // Handle keyboard events
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault(); // Prevent default new line behavior
-      if (inputValue.trim()) {
-        handleSendClick();
-      }
+      e.preventDefault();
+      if (inputValue.trim()) handleSendClick();
     }
-    // Shift+Enter will naturally create a new line (default behavior)
   }, [inputValue, handleSendClick]);
 
-  // Handle card click to send related question
   const handleCardClick = useCallback((cardText: string) => {
     const question = `Tell me about ${cardText.toLowerCase()}`;
     setInputValue(question);
     baseTextRef.current = question;
-    // Auto-resize after setting text
     setTimeout(autoResize, 0);
-    // Focus the textarea
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-    }
+    if (textareaRef.current) textareaRef.current.focus();
   }, [autoResize]);
 
-  // Auto-resize textarea when inputValue changes
   useEffect(() => {
     autoResize();
   }, [inputValue, autoResize]);
 
-  // Cleanup speech recognition on component unmount
   useEffect(() => {
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
+      if (recognitionRef.current) recognitionRef.current.stop();
     };
   }, []);
 
@@ -315,52 +265,72 @@ function App() {
 
       <main className="flex-1 flex flex-col items-center justify-start py-8 px-4 overflow-y-auto mt-[73px] mb-[89px]">
         <div className="w-full max-w-2xl">
-          <div className="flex items-end gap-3 p-4">
-            <div
-              className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center"
-            >
-              <img className='rounded-full' src={aiProfile} alt="aiprofile" />
+        {messages.map((msg) => (
+  <div
+    key={msg.id}
+    className={`flex items-end gap-3 p-4 ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+  >
+    {msg.type === 'ai' && (
+      <div
+        className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center bg-gradient-to-br from-purple-400 to-pink-400"
+      >
+        <img className="rounded-full" src={aiProfile} alt="AI" />
+      </div>
+    )}
+    
+    <div className={`flex flex-col gap-1 max-w-md ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
+      <p className="text-gray-500 text-sm font-medium">{msg.type === 'ai' ? 'AINAGER' : 'You'}</p>
+      <p className={`text-base font-normal leading-normal px-4 py-3 rounded-xl shadow-sm ${
+        msg.type === 'ai' ? 'bg-white text-gray-900' : 'bg-blue-500 text-white'
+      }`}>
+        {msg.content}
+      </p>
+    </div>
+
+    {msg.type === 'user' && (
+      <div className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center bg-gray-300">
+        <img className="rounded-full" src={userprofile} alt="User" />
+      </div>
+    )}
+  </div>
+))}
+
+          {/* AI Profile Section */}
+          <div className="mt-8 flex items-center gap-3 px-4">
+            <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+              <img className='rounded-full' src={aiProfile} alt="AI Profile" />
             </div>
-            <div className="flex flex-1 flex-col gap-1 items-start">
+            <div>
               <p className="text-gray-500 text-sm font-medium">AINAGER</p>
-              <p className="text-base font-normal leading-normal max-w-md rounded-xl px-4 py-3 bg-white text-gray-900 shadow-sm">
-                {messages[0].content}
-              </p>
+              <p className="text-gray-800 text-base font-medium">Here are some quick actions you can try:</p>
             </div>
           </div>
 
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 px-4">
+          {/* Suggestion cards */}
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 px-4">
             {suggestions.map((suggestion) => (
               <div
                 key={suggestion.id}
                 className="group relative overflow-hidden bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                 onClick={() => handleCardClick(suggestion.text)}
               >
-                {/* Background Image */}
                 <div className="relative h-32 overflow-hidden">
                   <img
                     src={suggestion.image}
                     alt={suggestion.text}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  {/* Gradient Overlay */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${suggestion.gradient} opacity-20 group-hover:opacity-30 transition-opacity duration-300`}></div>
-                  
-                  {/* Icon Overlay */}
                   <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg">
                     <div className={`text-white bg-gradient-to-br ${suggestion.gradient} rounded-md p-1.5`}>
-                  {suggestion.icon}
+                      {suggestion.icon}
                     </div>
                   </div>
                 </div>
-                
-                {/* Content */}
                 <div className="p-4">
                   <h3 className="text-gray-800 text-base font-semibold leading-tight mb-2 group-hover:text-gray-900 transition-colors">
-                  {suggestion.text}
+                    {suggestion.text}
                   </h3>
-                  
-                  {/* Action Indicator */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500 group-hover:text-gray-600 transition-colors">
                       Click to ask about this
@@ -368,9 +338,6 @@ function App() {
                     <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-all duration-300 group-hover:translate-x-1" />
                   </div>
                 </div>
-                
-                {/* Hover Effect Border */}
-                <div className={`absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-gradient-to-br group-hover:${suggestion.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
               </div>
             ))}
           </div>
