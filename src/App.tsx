@@ -301,8 +301,8 @@ function App() {
             <img src={logo} alt="logo"/>
           </div>
           <div>
-            <h2 className="text-gray-900 text-lg font-bold leading-tight tracking-tight"><span className='text-blue-900'>AI</span>NAGER</h2>
-            <div className="flex items-center gap-1.5">
+            <h2 className="text-gray-900 text-lg font-bold leading-tight tracking-normal">H<span className='text-blue-900'>AI</span>NAGER</h2>
+            <div className="flex items-center gap-1">
               <span className="w-2 h-2 bg-green-500 rounded-full"></span>
               <p className="text-green-500 text-xs font-medium">Online</p>
             </div>
