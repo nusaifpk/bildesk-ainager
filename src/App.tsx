@@ -166,7 +166,7 @@ function App() {
 
       recognition.onend = () => {
         setIsListening(false);
-        setIsRecording(false);
+        setIsRecording(false); 
         setInputValue(baseTextRef.current);
         setTimeout(autoResize, 0);
       };
