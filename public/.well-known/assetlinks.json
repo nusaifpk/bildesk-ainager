@@ -1,0 +1,13 @@
+[
+    {
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.bildesk_ainager.twa",
+        "sha256_cert_fingerprints": [
+          "5B:CC:16:B6:A8:85:89:7F:54:66:37:8C:64:47:39:00:46:38:27:CD:2F:D7:7A:4C:34:87:74:60:BB:3E:3C:83"
+        ]
+      }
+    }
+  ]
+  
